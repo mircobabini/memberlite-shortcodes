@@ -35,7 +35,7 @@ function memberlitesc_subpagelist_shortcode_handler( $atts, $content = null, $co
 	}
 
 	if ( $show_children == '0' || $show_children == 'false' || $show_children == 'no' ) {
-		$show_children = true;
+		$show_children = false;
 	}
 
 	if ( ! isset( $show_children_depth ) ) {
