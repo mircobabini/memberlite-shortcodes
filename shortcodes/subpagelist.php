@@ -5,7 +5,6 @@
  * @param  array $atts Configuration arguments.
  */
 function memberlitesc_subpagelist_shortcode_handler( $atts, $content = null, $code = '' ) {
-	global $post;
 	// $atts    ::= array of attributes
 	// $content ::= text within enclosing form of shortcode element
 	// $code    ::= the shortcode found, when == callback name
@@ -21,7 +20,7 @@ function memberlitesc_subpagelist_shortcode_handler( $atts, $content = null, $co
 		'orderby' => 'menu_order',
 		'order' => 'ASC',
 		'post_type' => 'page',
-		'post_parent' => $post->ID,
+		'post_parent' => get_the_ID(),
 		'show' => 'excerpt',
 		'show_children' => false,
 		'show_children_depth' => null,
@@ -36,7 +35,7 @@ function memberlitesc_subpagelist_shortcode_handler( $atts, $content = null, $co
 	}
 
 	if ( $show_children == '0' || $show_children == 'false' || $show_children == 'no' ) {
-		$show_children = false;
+		$show_children = true;
 	}
 
 	if ( ! isset( $show_children_depth ) ) {
@@ -122,8 +121,7 @@ function memberlitesc_subpagelist_shortcode_handler( $atts, $content = null, $co
 	for ( $i = 0; $i < $nchunks; $i++ ) :
 		$row = $memberlite_subpageposts_chunks[ $i ];
 		$r .= '<div class="row">';
-		foreach ( $row as $post ) :
-			setup_postdata( $post );
+		foreach ( $row as $row_item ) :
 			$r .= '<div class="medium-';
 			if ( $layout == '2col' ) {
 				$r .= '6';
@@ -135,22 +133,22 @@ function memberlitesc_subpagelist_shortcode_handler( $atts, $content = null, $co
 				$r .= '12';
 			}
 			$r .= ' columns">';
-			$r .= '<article id="post-' . get_the_ID() . '" class="' . implode( ' ', get_post_class() ) . ' memberlite_subpagelist_item">';
-			if ( has_post_thumbnail() && empty( $layout ) && ! empty( $thumbnail ) && $thumbnail !== 'icon' ) {
+			$r .= '<article id="post-' . $row_item->ID . '" class="' . implode( ' ', get_post_class( '', $row_item->ID ) ) . ' memberlite_subpagelist_item">';
+			if ( has_post_thumbnail( $row_item->ID ) && empty( $layout ) && ! empty( $thumbnail ) && $thumbnail !== 'icon' ) {
 				if ( $layout == '3col' || $layout == '4col' ) {
 					$thumbnail_class = 'aligncenter';
 				} else {
 					$thumbnail_class = 'alignright';
 				}
 				if ( $link ) {
-					$r .= '<a href="' . get_permalink() . '">' . get_the_post_thumbnail( $post->ID, $thumbnail, array( 'class' => $thumbnail_class ) ) . '</a>';
+					$r .= '<a href="' . get_permalink( $row_item->ID ) . '">' . get_the_post_thumbnail( $row_item->ID, $thumbnail, array( 'class' => $thumbnail_class ) ) . '</a>';
 				} else {
-					$r .= get_the_post_thumbnail( $post->ID, $thumbnail, array( 'class' => $thumbnail_class ) );
+					$r .= get_the_post_thumbnail( $row_item->ID, $thumbnail, array( 'class' => $thumbnail_class ) );
 				}
 			}
 
 			if ( $thumbnail == 'icon' ) {
-				$memberlite_page_icon = get_post_meta( $post->ID, '_memberlite_page_icon', true );
+				$memberlite_page_icon = get_post_meta( $row_item->ID, '_memberlite_page_icon', true );
 				$font_awesome_icons_brands = memberlite_shortcodes_get_font_awesome_icons( 'brand' );
 
 				// Check if the icon is a "brand" icon and set the appropriate icon class.
@@ -168,7 +166,7 @@ function memberlitesc_subpagelist_shortcode_handler( $atts, $content = null, $co
 						$r .= '<div class="large-2 text-center columns">';
 					}
 					if ( $link ) {
-						$r .= '<a href="' . get_permalink() . '"><i class="' . esc_attr( $memberlite_page_icon_class ) . ' fa-5x fa-' . esc_attr( $memberlite_page_icon ) . '"></i></a>';
+						$r .= '<a href="' . get_permalink( $row_item->ID ) . '"><i class="' . esc_attr( $memberlite_page_icon_class ) . ' fa-5x fa-' . esc_attr( $memberlite_page_icon ) . '"></i></a>';
 					} else {
 						$r .= '<i class="' . esc_attr( $memberlite_page_icon_class ) . ' fa-5x fa-' . esc_attr( $memberlite_page_icon ) . '"></i>';
 					}
@@ -184,47 +182,47 @@ function memberlitesc_subpagelist_shortcode_handler( $atts, $content = null, $co
 			$r .= '<h2 class="entry-title">';
 
 			if( $link ) {
-				$r .= '<a href="' . get_permalink() . '" rel="bookmark">';
-				$r .= the_title( '', '', false );
+				$r .= '<a href="' . get_permalink( $row_item->ID ) . '" rel="bookmark">';
+				$r .= get_the_title( $row_item->ID );
 				$r .= '</a>';
 			} else {
-				$r .= the_title( '', '', false );
+				$r .= get_the_title( $row_item->ID );
 			}
 
 			$r .= '</h2>';
 			$r .= '</header>';
 			$r .= '<div class="entry-content">';
 
-			if ( has_post_thumbnail() && ! empty( $layout ) && ! empty( $thumbnail ) && $thumbnail !== 'icon') {
+			if ( has_post_thumbnail( $row_item->ID ) && ! empty( $layout ) && ! empty( $thumbnail ) && $thumbnail !== 'icon') {
 				if ( $layout == '3col' || $layout == '4col' ) {
 					$thumbnail_class = 'aligncenter';
 				} else {
 					$thumbnail_class = 'alignright';
 				}
 				if ( $link ) {
-					$r .= '<a href="' . get_permalink() . '">' . get_the_post_thumbnail( $post->ID, $thumbnail, array( 'class' => $thumbnail_class ) ) . '</a>';
+					$r .= '<a href="' . get_permalink( $row_item->ID ) . '">' . get_the_post_thumbnail( $row_item->ID, $thumbnail, array( 'class' => $thumbnail_class ) ) . '</a>';
 				} else {
-					$r .= get_the_post_thumbnail( $post->ID, $thumbnail, array( 'class' => $thumbnail_class ) );
+					$r .= get_the_post_thumbnail( $row_item->ID, $thumbnail, array( 'class' => $thumbnail_class ) );
 				}
 			}
 
 			if ( $show == 'excerpt' ) {
-				$r .= apply_filters( 'the_content', preg_replace( '/\[memberlite_subpagelist[^\]]*\]/', '', get_the_excerpt( '' ) ) );
+				$r .= apply_filters( 'the_content', preg_replace( '/\[memberlite_subpagelist[^\]]*\]/', '', get_the_excerpt( $row_item->ID ) ) );
 			} elseif ( $show == 'content' ) {
-				$r .= apply_filters( 'the_content', preg_replace( '/\[memberlite_subpagelist[^\]]*\]/', '', get_the_content( '' ) ) );
+				$r .= apply_filters( 'the_content', preg_replace( '/\[memberlite_subpagelist[^\]]*\]/', '', get_the_content( '', false, $row_item->ID ) ) );
 			} else {
 				$r .= '';
 			}
 
 			if ( ! empty( $show_children ) ) {
 				$r .= '<ul class="memberlite_subpagelist_children">';
-				$r .= '<li class="page_item page-item-' . intval( $post->ID ) . '"><a href="' . get_permalink() . '" rel="bookmark">' . the_title( '', '', false ) . '</a></li>';
-				$r .= wp_list_pages( array( 'child_of' => $post->ID, 'depth' => $show_children_depth, 'echo' => false, 'exclude' => $exclude, 'sort_column' => 'menu_order', 'title_li' => '' ) );
+				$r .= '<li class="page_item page-item-' . intval( $row_item->ID ) . '"><a href="' . get_permalink( $row_item->ID ) . '" rel="bookmark">' . get_the_title( $row_item->ID ) . '</a></li>';
+				$r .= wp_list_pages( array( 'child_of' => $row_item->ID, 'depth' => $show_children_depth, 'echo' => false, 'exclude' => $exclude, 'sort_column' => 'menu_order', 'title_li' => '' ) );
 				$r .= '</ul>';
 			}
 
 			if ( $link ) {
-				$r .= '<a class="more-link" href="' . get_permalink() . '" rel="bookmark">';
+				$r .= '<a class="more-link" href="' . get_permalink( $row_item->ID ) . '" rel="bookmark">';
 				$r .= esc_html( $link_text );
 				$r .= '</a>';
 			}
@@ -247,9 +245,6 @@ function memberlitesc_subpagelist_shortcode_handler( $atts, $content = null, $co
 		}
 
 	endfor;
-
-	// Reset Query.
-	wp_reset_query();
 
 	// Revert.
 	$more = $oldmore;
